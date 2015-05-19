@@ -36,6 +36,7 @@ from third_party.colorama import Fore, Style
 from git_common import current_branch, upstream, tags, get_branches_info
 from git_common import get_git_version, MIN_UPSTREAM_TRACK_GIT_VERSION, hash_one
 from git_common import run
+from git_common import buckets
 
 DEFAULT_SEPARATOR = ' ' * 4
 
@@ -300,6 +301,9 @@ def main(argv):
   mapper.show_subject = opts.show_subject
   mapper.start()
   print mapper.output.as_formatted_string()
+  
+  for k,v in sorted(buckets.iteritems(), key=lambda x: x[1]):
+    print '%-8.3f %s' %( v, k)
   return 0
 
 if __name__ == '__main__':

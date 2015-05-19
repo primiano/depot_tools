@@ -26,6 +26,7 @@ import signal
 import sys
 import tempfile
 import textwrap
+import time
 import threading
 
 import subprocess2
@@ -565,6 +566,8 @@ def run_stream(*cmd, **kwargs):
   return proc.stdout
 
 
+buckets = {}
+
 def run_with_stderr(*cmd, **kwargs):
   """Runs a git command.
 
@@ -581,9 +584,13 @@ def run_with_stderr(*cmd, **kwargs):
   indata = kwargs.pop('indata', None)
 
   cmd = (GIT_EXE, '-c', 'color.ui=never') + cmd
+  s = time.time()
   proc = subprocess2.Popen(cmd, **kwargs)
   ret, err = proc.communicate(indata)
   retcode = proc.wait()
+  bucket_key = ' '.join(cmd[:-1])
+  buckets.setdefault(bucket_key, 0)
+  buckets[bucket_key] += time.time() - s
   if retcode != 0:
     raise subprocess2.CalledProcessError(retcode, cmd, os.getcwd(), ret, err)
 
