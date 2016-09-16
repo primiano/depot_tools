@@ -883,6 +883,28 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     # Always parse the DEPS file.
     self.ParseDepsFile()
+
+    # Setup the merge driver for The Great Blink Reformatting. This does just
+    # setup a custom merge-driver in the git config of the Chromium main project
+    # but does not have any effect until somebody changes the .gitattributes
+    # to refer to it. See crbug.com/574611 for more.
+    # TODO(primiano): remove some weeks after the reformatting. ETA: Oct 2016.
+    if parsed_url == CHROMIUM_SRC_URL:
+      CFG_PREFIX = 'merge.clang_format_merge_driver'
+      try:
+        merge_driver = self._used_scm._Capture(
+            ['config', CFG_PREFIX + '.driver']).strip()
+      except subprocess2.CalledProcessError, e:
+        merge_driver = None
+
+      if not merge_driver:
+        print('Installing clang-format merge driver for crbug/574611')
+        self._used_scm._Capture(['config', CFG_PREFIX + '.name',
+                                 'clang-format merge driver (crbug/574611)'])
+        self._used_scm._Capture(['config', CFG_PREFIX + '.driver',
+                                 'clang_format_merge_driver %O %A %B %L %P'])
+        self._used_scm._Capture(['config', CFG_PREFIX + '.recursive', 'binary'])
+
     self._run_is_done(file_list or [], parsed_url)
     if command in ('update', 'revert') and not options.noprehooks:
       self.RunPreDepsHooks()
